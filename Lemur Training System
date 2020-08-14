@@ -1,0 +1,208 @@
+#include "mbed.h" 
+#include "uLCD_4DGL.h"
+#include <stdlib.h> 
+#include "Speaker.h"
+#include <vector>
+#define WHITE 0xFFFFFF 
+#define BLACK 0x000000 
+#define RED 0xFF0000 
+#define GREEN 0x00FF00 
+#define BLUE 0x0000FF 
+#define LGREY 0xBFBFBF 
+#define DGREY 0x5F5F5F
+
+using namespace std;
+vector <int> leftRect;
+vector <int> rightRect;
+Timer t;
+
+uLCD_4DGL uLCD(p9, p10, p11); 
+DigitalIn pbQuit(p21);
+DigitalIn pbLeft(p22);
+DigitalIn pbRight(p23);
+DigitalOut myled(LED1);
+Speaker mySpeaker(p24);
+
+
+
+void printLeftCircles(int &left){
+    int a;
+    for (a=0; a<left; a++)
+    {
+        int i;
+        i= 2 * ( rand() % 18 + 0 );
+        int rr= rand()%10 +1;
+        uLCD.filled_circle(leftRect[i],leftRect[i+1],rr,RED);
+    }
+}
+
+void printRightCircles(int right)
+{
+    int b;
+    for (int c=0; c<right; c++)
+    {
+        b= 2 * ( rand() % 18 + 0 );
+        int rr= rand()%10 +1;
+        uLCD.filled_circle(rightRect[b],rightRect[b+1],rr,RED);
+
+    }       
+}
+void DrawRight()
+{
+    uLCD.rectangle(62, 0 ,122, 120, WHITE);
+}
+void DrawLeft()
+{
+    uLCD.rectangle(0, 0 ,60, 120, WHITE);
+
+}
+
+
+int main() 
+{
+    bool sp= false;
+    while(!sp) {
+        mySpeaker.PlayNote(969.0, 0.1, 0.5);
+        mySpeaker.PlayNote(950.0, 0.1, 0.5);
+        mySpeaker.PlayNote(920.0, 0.1, 0.5);
+        mySpeaker.PlayNote(859.0, 0.1, 0.5);
+        mySpeaker.PlayNote(800.0, 0.1, 0.5);
+        mySpeaker.PlayNote(760.0, 0.1, 0.5);
+        mySpeaker.PlayNote(720.0, 0.1, 0.5);
+        sp= true;
+        break;
+    }
+    srand (time(NULL));
+    pbLeft.mode(PullUp); 
+    pbRight.mode(PullUp);
+    pbQuit.mode(PullUp);
+    uLCD.text_width(2); 
+    uLCD.text_height(2);
+    uLCD.printf("\nWelcome\nLemurs!\n");
+    uLCD.baudrate(BAUD_3000000); 
+    wait(2.0);
+    uLCD.cls();
+    uLCD.rectangle(0, 0 ,60, 120, WHITE);
+    uLCD.rectangle(62, 0 ,122, 120, WHITE);
+    for (int x=10; x<=50; x+=20)
+    {
+        for (int y=10; y<=110; y+=20)
+        {
+            leftRect.push_back(x);
+            leftRect.push_back(y);
+        }
+    }
+    for (int x=72; x<=112; x+=20)
+    {
+        for (int y=10; y<=110; y+=20)
+        {
+            rightRect.push_back(x);
+            rightRect.push_back(y);
+
+        }
+    }
+    float counter=1;
+    float correct=0;
+    float fraction;
+    bool getout = false;
+    while(!getout)
+    {
+        DrawLeft();
+        DrawRight();
+        int leftnum;
+        int rightnum;
+        leftnum= rand()%15 +1;
+        rightnum= rand()%15 +1;
+        while(leftnum==rightnum)
+            rightnum= rand()%15 +1;
+            
+        printLeftCircles(leftnum);
+        printRightCircles(rightnum);
+        t.start();
+        bool GETOUT = false;
+        while(!GETOUT)
+         {
+            if (!pbLeft) //left button pressed 
+            
+            { 
+                uLCD.cls();
+                if (leftnum < rightnum)
+                    {   
+                        correct++;
+                        uLCD.printf("Lemur Correct!\n");
+                        uLCD.printf("Trial number: %f \n", counter);
+                        fraction= correct/counter;
+                        uLCD.printf ("Correct fraction: %f \n", fraction);
+                        uLCD.printf("Time Taken %f", t.read());
+                        uLCD.printf("seconds");
+                        counter++;
+                        t.reset();
+                        
+                    }
+                else
+                    {   
+                        uLCD.printf("Lemur Incorrect!\n");
+                        uLCD.printf("Trial number: %f \n", counter);
+                        fraction= correct/counter;
+                        uLCD.printf ("Correct fraction: %f \n", fraction);
+                        uLCD.printf("Time Taken %f", t.read());
+                        uLCD.printf("seconds");
+                        counter++;
+                        t.reset();
+                        
+                    } 
+                wait(3.0);
+                uLCD.cls(); 
+                GETOUT = true; 
+                
+    
+            }
+        if (!pbRight) //right button pressed 
+            {
+               uLCD.cls();
+                if (leftnum > rightnum)
+                    {   
+                        correct++;
+                        uLCD.printf("Lemur Correct!\n");
+                        uLCD.printf("Trial number: %f \n", counter);
+                        fraction= correct/counter;
+                        uLCD.printf("Correct fraction: %f \n", fraction);
+                        uLCD.printf("Time Taken %f", t.read());
+                        uLCD.printf("seconds");
+                        t.reset();
+                        counter++;
+                        
+                    }
+                else
+                    {   
+                        uLCD.printf("Lemur Incorrect! \n");
+                        uLCD.printf("Trial number: %f \n", counter);
+                        fraction= correct/counter;
+                        uLCD.printf ("Correct fraction: %f \n", fraction);
+                        uLCD.printf("Time Taken %f", t.read());
+                        uLCD.printf("seconds");
+                        counter++;
+                        t.reset();
+                        
+                    }
+                wait(3.0);
+                uLCD.cls(); 
+                GETOUT = true; 
+            } 
+            if (!pbQuit)
+            {
+                GETOUT = true;
+                getout= true;
+                
+            }
+
+            
+    
+          
+    }
+  
+    }
+    uLCD.cls();
+    uLCD.printf ("Exit");
+    }
+

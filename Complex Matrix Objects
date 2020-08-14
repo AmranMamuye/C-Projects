@@ -1,0 +1,354 @@
+#ifndef MATRIX_H
+#define MATRIX_H
+#include <iostream>
+#include "Complex.h"
+#include <string>
+#define MATRIX_FIELD 30
+
+
+//This is a class prototype to let the compiler know //that I intend to define a class Matrix. It is needed //for the global function definition that I put before //the class Matrix as an example in this lab.
+class Matrix;
+
+std::ostream& operator<< (std::ostream &cout, const Matrix &M);
+Matrix operator*(Complex Num, Matrix &RHS);
+
+
+
+
+class Matrix
+{
+   
+    friend Matrix operator*(Complex Num, Matrix &);
+    friend std::ostream& operator<< (std::ostream &cout, const Matrix &M);
+    
+public:
+    Matrix(int, int);
+    Matrix(const Matrix &);
+    ~Matrix();
+    void transpose();
+    void setRow(int);
+    void setCol(int);
+    int getRow();
+    int getCol();
+    Complex & operator()(int,int);
+    Matrix operator+(Matrix &RHS);
+    Matrix operator- (Matrix &RHS);
+    Matrix operator*(Matrix &RHS);
+    Matrix operator * (Complex RHS);
+    void printMatrix();
+    Complex & operator[](const int &Index);
+    Matrix operator~();
+    Matrix operator!();
+    Matrix operator=(const Matrix &M);
+
+private:
+    int rows;
+    int cols;
+    Complex * complexPtr;
+
+
+
+
+#endif
+
+};
+#include <iostream>
+#ifndef COMPLEX_H
+#define COMPLEX_H
+#include "matrix.h"
+#include <iostream>
+#include <string>
+#include <iomanip>
+
+using namespace std;
+
+void Matrix::setRow(int r){rows = r;}
+void Matrix::setCol(int c) {cols = c;}
+int Matrix::getRow()
+{return rows;}
+int Matrix::getCol()
+
+{return cols;}
+
+
+Matrix::Matrix(int r , int c)
+{
+    rows= r;
+    cols= c;
+    complexPtr= new Complex[rows*cols];
+    
+}
+
+
+Matrix::Matrix(const Matrix &other)
+{
+    rows = other.rows;
+    cols = other.cols;
+
+    complexPtr = new Complex[rows*cols];
+    for(int i = 0; i < rows*cols; ++i)
+    {
+            complexPtr[i] = other.complexPtr[i];
+    }
+}
+
+void Matrix::printMatrix()
+{
+    string temp;
+    string Temp;
+    
+    for (int r = 0; r < rows; ++r)
+    {
+        for (int c = 0; c < cols; ++c)
+        {
+            if (this->complexPtr[r*cols+c].getImag() == 0) // pure real number
+            {
+                //cout<<(complexPtr[r*cols + c])<<" ";
+                temp = to_string( (long double) complexPtr[r*cols+c].getReal());
+                cout << setw(30) << left << temp << right;
+            }
+            else if (this->complexPtr[r*cols+c].getReal() == 0) // for imaginary
+            {
+                temp = to_string( (long double) complexPtr[r*cols+c].getImag());
+                cout << setw(30) << left << temp << right;
+            }
+            else
+            {
+                temp = to_string( (long double) complexPtr[r*cols+c].getReal())+ " + "+to_string( (long double) complexPtr[r*cols+c].getImag())+"j";
+                cout << setw(30) << left << temp<< right;
+            }
+        }
+    cout<<endl;
+    }
+}
+
+Matrix::~Matrix()
+{
+    if (complexPtr!=NULL)
+    {
+        delete[] complexPtr;
+    }
+}
+
+Complex & Matrix::operator()(int a,int b)
+{
+    int index= ((a-1)*cols)+b-1;
+    return complexPtr[index];
+}
+
+ostream &operator<<(std::ostream &cout, const Matrix &M)
+{
+    string temp;
+    string Temp;
+    if (M.rows==0 || M.cols==0 || M.complexPtr==NULL)
+    {
+        cout<<"Matrix Mismatch Error!"<<endl<<"This matrix has zero elements"<<endl;
+    }
+    else
+    {
+        for (int i=0; i < M.rows; ++i)
+        {
+            for (int j=0; j < M.cols; ++j)
+            {
+                if (M.complexPtr[i*M.cols+j].getImag() == 0) // pure real number
+                {
+                    //cout<<(complexPtr[r*cols + c])<<" ";
+                    temp = to_string( (long double) M.complexPtr[i*M.cols+j].getReal());
+                    cout << setw(30) << left << temp << right;
+                }
+                else if (M.complexPtr[i*M.cols+j].getReal() == 0) // for imaginary
+                {
+                    temp = to_string( (long double) M.complexPtr[i*M.cols+j].getImag());
+                    cout << setw(30) << left << temp << right;
+                }
+                else
+                {
+                    temp = to_string( (long double) M.complexPtr[i*M.cols+j].getReal())+ " + " +to_string( (long double) M.complexPtr[i*M.cols+j].getImag())+"j";
+                    cout << setw(30) <<left << temp<<right;
+                }
+            }
+            cout << '\n';
+            }
+    }
+    return cout;
+}
+
+Complex & Matrix::operator [](const int &Index)
+{
+    int i = ((Index-1)*cols)-1;
+    return  complexPtr[i];
+}
+
+Matrix  Matrix::operator *(Matrix &RHS)
+{
+    if (this->cols==RHS.getRow())
+    {
+        Matrix temp(this->rows,RHS.getCol());
+        for(int i=1;i<=this->rows;i++)
+            for(int j=1;j<=RHS.getCol();j++)
+                for(int k =1;k<=RHS.getRow();k++){
+                    temp(i,j)= temp(i,j)+ (*this)(i,k)*RHS(k,j);
+
+                }
+        return temp;
+    }
+
+    else
+        {
+            Matrix temp(0,0);
+            delete [] temp.complexPtr;
+            return temp;
+        }
+}
+
+Matrix  operator*(Complex Num, Matrix &RHS)
+{
+    Matrix temp(RHS.getRow(),RHS.getCol());
+    for(int i=1;i<=RHS.rows;i++)
+    {
+        for(int j=1;j<=RHS.getCol();j++)
+        {
+                temp(i,j)=RHS(i,j)*Num;
+        }
+    }
+    return temp;
+}
+
+Matrix Matrix::operator *(Complex RHS)
+    {
+        Matrix temp(rows,cols);
+        if (RHS.getReal()!=0||RHS.getImag()!=0 )
+        {
+            for(int i=1;i<=this->rows;i++)
+            {
+                for(int j=1;j<=this->cols;j++)
+                {
+                    temp(i,j)=(*this)(i,j)*RHS;
+
+                }
+            }
+            return temp;
+        }
+        else
+        {
+            temp.setRow(0);
+            temp.setCol(0);
+            temp.complexPtr = NULL;
+            return temp;
+            
+        }
+    }
+
+Matrix Matrix::operator+(Matrix &RHS)
+{
+    
+    if (rows==RHS.rows && cols==RHS.cols)
+    {
+        Matrix temp(rows,cols);
+        for(int i=0;i<(rows*cols);i++)
+        {
+            temp.complexPtr[i]=RHS.complexPtr[i]+complexPtr[i];
+        
+        }
+        return temp;
+    }
+    else{
+        Matrix temp(0,0);
+        temp.complexPtr= NULL;
+        return temp;
+    }
+    
+}
+
+Matrix Matrix::operator-(Matrix &RHS)
+{
+    Matrix temp(rows,cols);
+    if (rows==RHS.rows && cols==RHS.cols)
+    {
+        for(int i=0;i<rows*cols;i++)
+        {
+            temp.complexPtr[i]=(RHS.complexPtr[i])-(complexPtr[i]);
+
+        }
+    }
+    else{
+        temp.setRow(0);
+        temp.setCol(0);
+        complexPtr= NULL;
+        
+    }
+    return temp;
+}
+
+Matrix Matrix::operator~()
+{
+    Matrix Temp(cols,rows);
+    for (int i=1; i<=Temp.getCol();i++)
+    {
+        for(int j=1; j<=Temp.getRow();j++)
+        {
+            Temp(i,j)=(*this)(j,i);
+        }
+    
+    
+    }
+    return Temp;
+}
+
+
+Matrix Matrix::operator!()
+{
+    Matrix Temp(cols,rows);
+    for (int i=1; i<=Temp.getCol();i++)
+    {
+        for(int j=1; j<=Temp.getRow();j++)
+        {
+            Temp(i,j)=(*this)(j,i);
+            //Temp(i,j)= complexPtr(Temp.getReal(), Temp.getImag()*-1)
+            Temp(i,j).setImag(Temp(i,j).getImag() * -1);
+        }
+    }
+    return Temp;
+}
+
+void Matrix::transpose()
+{
+    Matrix Temp(cols,rows);
+    for (int i=1; i<=this->rows;i++)
+    {
+        for(int j=1; j<=this->cols;j++)
+        {
+            Temp(i,j)=(*this)(j,i);
+        }
+    }
+    (*this)= Temp;
+    
+}
+
+
+Matrix Matrix::operator=(const Matrix &M)
+{
+    int size= rows*cols;
+    int Msize= M.rows*M.cols;
+    if (&M != this)
+    {
+       if (size != Msize)
+       {
+           delete[] complexPtr;
+            complexPtr= new Complex[Msize];
+       }
+      
+        rows= M.rows;
+        cols= M.cols;
+       for (int i=0; i<(rows*cols); i++)
+       {
+        complexPtr[i]= M.complexPtr[i];
+       }
+     }
+    
+     return (*this);
+    
+}
+
+
+#endif
